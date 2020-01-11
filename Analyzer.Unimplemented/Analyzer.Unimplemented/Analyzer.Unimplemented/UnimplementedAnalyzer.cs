@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
+using System.Reflection.Metadata;
 using System.Threading;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -26,16 +27,48 @@ namespace Analyzer.Unimplemented
 
         public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics { get { return ImmutableArray.Create(Rule); } }
 
+        private List<SyntaxTree> syntaxTrees = new List<SyntaxTree>();
+
         public override void Initialize(AnalysisContext context)
         {
             // TODO: Consider registering other actions that act on syntax instead of or in addition to symbols
             // See https://github.com/dotnet/roslyn/blob/master/docs/analyzers/Analyzer%20Actions%20Semantics.md for more information
-            context.RegisterSymbolAction(AnalyzeSymbol, SymbolKind.NamedType);
+            context.RegisterSyntaxTreeAction(AnalyzeSyntaxTree);
+            // context.RegisterCompilationAction();
         }
 
-        private static void AnalyzeInterfaceDeclarationSyntax(SyntaxNodeAnalysisContext context)
+
+        private void AnalyzeSyntaxTree(Compilation compilation, SyntaxTree tree)
         {
-            var interfaceDeclaration = (InterfaceDeclarationSyntax) context.Node;
+            var semanticModel = compilation.GetSemanticModel(tree);
+            var implGraph = new ImplementationGraph(semanticModel);
+            var classDeclarations = tree.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>();
+        }
+
+        private void ProcessInterfaceDeclarations(ImplementationGraph implGraph, SyntaxTree tree)
+        {
+            var declarations = tree.GetRoot().DescendantNodes().OfType<InterfaceDeclarationSyntax>();
+            AddDeclarations(implGraph, declarations);
+        }
+
+        private void ProcessClassDeclarations(ImplementationGraph implGraph, SyntaxTree tree)
+        {
+            var declarations = tree.GetRoot().DescendantNodes().OfType<ClassDeclarationSyntax>();
+            AddDeclarations(implGraph, declarations);
+        }
+
+        private void AddDeclarations<T>(ImplementationGraph implGraph, IEnumerable<T> declarations) where T : TypeDeclarationSyntax
+        {
+            foreach (var decl in declarations)
+            {
+                implGraph.AddDeclaration(decl);
+            }
+        }
+
+
+        private void AnalyzeSyntaxTree(SyntaxTreeAnalysisContext context)
+        {
+            syntaxTrees.Add(context.Tree);
         }
 
         private static void AnalyzeSymbol(SymbolAnalysisContext context)
