@@ -9,12 +9,13 @@ using Analyzer.Unimplemented;
 namespace Analyzer.Unimplemented.Test
 {
     [TestClass]
-    public class UnimplementedAnalyzerTests: CodeFixVerifier
+    public class UnimplementedAnalyzerTests : CodeFixVerifier
     {
+
 
         //No diagnostics expected to show up
         [TestMethod]
-        public void TestMethod1()
+        public void TestEmpty()
         {
             var test = @"";
 
@@ -23,60 +24,183 @@ namespace Analyzer.Unimplemented.Test
 
         //Diagnostic and CodeFix both triggered and checked for
         [TestMethod]
-        public void TestMethod2()
+        public void TestValid_SingleFile_SameNamespace()
         {
             var test = @"
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
-    using System.Threading.Tasks;
-    using System.Diagnostics;
-
-    namespace ConsoleApplication1
+    namespace N
     {
-        class TypeName
-        {   
+        public interface IInterface 
+        {
+            int A { get; }
+        }
+    
+        public class Implementation: IInterface 
+        {
+            public int A { get; } = 10;
         }
     }";
+            VerifyCSharpDiagnostic(test);
+        }
+
+        [TestMethod]
+        public void TestValid_MultiFile_SameNamespace()
+        {
+            string test1 = @"
+namespace N
+{
+    public interface IInterface 
+    {
+        int A { get; }
+    }
+}",
+                test2 = @"
+namespace N
+{
+    public class Implementation: IInterface 
+    {
+        public int A { get; } = 10;
+    }
+}";
+            VerifyCSharpDiagnostic(new[] { test1, test2 });
+        }
+
+        [TestMethod]
+        public void TestValid_MultiFile_DifferentNamespace()
+        {
+            string test1 = @"
+namespace N
+{
+    public interface IInterface 
+    {
+        int A { get; }
+    }
+}",
+                test2 = @"
+namespace M
+{
+    using N;
+    public class Implementation: IInterface 
+    {
+        public int A { get; } = 10;
+    }
+}";
+            VerifyCSharpDiagnostic(new[] { test1, test2 });
+        }
+
+
+        [TestMethod]
+        public void TestValid_SingleFile_SeparateNamespaces()
+        {
+            var test = @"
+    namespace N
+    {
+        namespace Abstractions 
+        {
+            public interface IInterface 
+            {
+                int A { get; }
+            }
+        }
+
+        namespace Foo
+        {
+            using Abstractions;
+    
+            public class Implementation: IInterface 
+            {
+                public int A { get; } = 10;
+            }
+        }
+    }";
+            VerifyCSharpDiagnostic(test);
+        }
+
+        //Diagnostic and CodeFix both triggered and checked for
+        [TestMethod]
+        public void TestInvalid_SingleFile_SameNamespace()
+        {
+            var test = @"
+namespace N
+{
+    public interface IInterface
+    {
+        int A { get; }
+    }
+
+    namespace Abstractions
+    {
+        public interface IInterface
+        {
+            long B { get; }
+        }
+
+
+        public class Implementation : IInterface
+        {
+            public int A { get; } = 10;
+            public long B { get; } = 456;
+        }
+    }
+}";
             var expected = new DiagnosticResult
             {
-                Id = "AnalyzerUnimplemented",
-                Message = String.Format("Type name '{0}' contains lowercase letters", "TypeName"),
+                Id = "AnalyzerUnused",
+                Message = String.Format("Interface '{0}.{1}' has no implementations", "N", "IInterface"),
                 Severity = DiagnosticSeverity.Warning,
                 Locations =
                     new[] {
-                            new DiagnosticResultLocation("Test0.cs", 11, 15)
+                            new DiagnosticResultLocation("Test0.cs", 3, 22)
                         }
             };
 
             VerifyCSharpDiagnostic(test, expected);
-
-            var fixtest = @"
-    using System;
-    using System.Collections.Generic;
-    using System.Linq;
-    using System.Text;
-    using System.Threading.Tasks;
-    using System.Diagnostics;
-
-    namespace ConsoleApplication1
-    {
-        class TYPENAME
-        {   
-        }
-    }";
-            VerifyCSharpFix(test, fixtest);
         }
 
-        protected override CodeFixProvider GetCSharpCodeFixProvider()
+        [TestMethod]
+        public void TestInvalid_SingleFile_FullyQualified()
         {
-            return new AnalyzerUnimplementedCodeFixProvider();
+            var test = @"
+namespace N
+{
+    public interface IInterface
+    {
+        int A { get; }
+    }
+
+    namespace Abstractions
+    {
+        public interface IInterface
+        {
+            long B { get; }
         }
+
+
+        public class Implementation : N.IInterface
+        {
+            public int A { get; } = 10;
+            public long B { get; } = 456;
+        }
+    }
+}";
+            var expected = new DiagnosticResult
+            {
+                Id = "AnalyzerUnused",
+                Message = String.Format("Interface '{0}.{1}' has no implementations", "N.Abstractions", "IInterface"),
+                Severity = DiagnosticSeverity.Warning,
+                Locations =
+                    new[] {
+                        new DiagnosticResultLocation("Test0.cs", 10, 26)
+                    }
+            };
+
+            VerifyCSharpDiagnostic(test, expected);
+        }
+
+
 
         protected override DiagnosticAnalyzer GetCSharpDiagnosticAnalyzer()
         {
-            return new AnalyzerUnimplementedAnalyzer();
+            return new UnimplementedAnalyzer();
         }
     }
 }

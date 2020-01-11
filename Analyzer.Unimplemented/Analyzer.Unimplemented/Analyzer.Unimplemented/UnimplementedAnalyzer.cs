@@ -11,7 +11,7 @@ using Microsoft.CodeAnalysis.Diagnostics;
 namespace Analyzer.Unimplemented
 {
     [DiagnosticAnalyzer(LanguageNames.CSharp)]
-    public class AnalyzerUnimplementedAnalyzer : DiagnosticAnalyzer
+    public class UnimplementedAnalyzer : DiagnosticAnalyzer
     {
         public const string DiagnosticId = "UnimplementedInterface";
 
@@ -31,6 +31,11 @@ namespace Analyzer.Unimplemented
             // TODO: Consider registering other actions that act on syntax instead of or in addition to symbols
             // See https://github.com/dotnet/roslyn/blob/master/docs/analyzers/Analyzer%20Actions%20Semantics.md for more information
             context.RegisterSymbolAction(AnalyzeSymbol, SymbolKind.NamedType);
+        }
+
+        private static void AnalyzeInterfaceDeclarationSyntax(SyntaxNodeAnalysisContext context)
+        {
+            var interfaceDeclaration = (InterfaceDeclarationSyntax) context.Node;
         }
 
         private static void AnalyzeSymbol(SymbolAnalysisContext context)
