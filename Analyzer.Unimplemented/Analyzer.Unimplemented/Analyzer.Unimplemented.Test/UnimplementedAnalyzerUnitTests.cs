@@ -9,7 +9,7 @@ using Analyzer.Unimplemented;
 namespace Analyzer.Unimplemented.Test
 {
     [TestClass]
-    public class UnitTest : CodeFixVerifier
+    public class UnimplementedAnalyzerTests: CodeFixVerifier
     {
 
         //No diagnostics expected to show up
