@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>netstandard1.3</TargetFramework>
+    <TargetFramework>netstandard2.1</TargetFramework>
     <IncludeBuildOutput>false</IncludeBuildOutput>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
   </PropertyGroup>
@@ -20,6 +20,7 @@
     <Copyright>Copyright</Copyright>
     <PackageTags>Analyzer.Unimplemented, analyzers</PackageTags>
     <NoPackageAnalysis>true</NoPackageAnalysis>
+    <LangVersion>8</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>

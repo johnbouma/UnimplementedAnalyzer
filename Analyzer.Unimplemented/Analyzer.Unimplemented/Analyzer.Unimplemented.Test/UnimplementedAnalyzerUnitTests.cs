@@ -144,12 +144,12 @@ namespace N
 }";
             var expected = new DiagnosticResult
             {
-                Id = "AnalyzerUnused",
-                Message = String.Format("Interface '{0}.{1}' has no implementations", "N", "IInterface"),
+                Id = "UnimplementedInterface",
+                Message = String.Format("Interface '{0}.{1}' is not implemented", "N", "IInterface"),
                 Severity = DiagnosticSeverity.Warning,
                 Locations =
                     new[] {
-                            new DiagnosticResultLocation("Test0.cs", 3, 22)
+                            new DiagnosticResultLocation("Test0.cs", 4, 22)
                         }
             };
 
@@ -184,12 +184,12 @@ namespace N
 }";
             var expected = new DiagnosticResult
             {
-                Id = "AnalyzerUnused",
-                Message = String.Format("Interface '{0}.{1}' has no implementations", "N.Abstractions", "IInterface"),
+                Id = "UnimplementedInterface",
+                Message = String.Format("Interface '{0}.{1}' is not implemented", "N.Abstractions", "IInterface"),
                 Severity = DiagnosticSeverity.Warning,
                 Locations =
                     new[] {
-                        new DiagnosticResultLocation("Test0.cs", 10, 26)
+                        new DiagnosticResultLocation("Test0.cs", 11, 26)
                     }
             };
 
